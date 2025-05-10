@@ -29,8 +29,6 @@ namespace ADBDrive
             InitializeComponent();
         }
 
-        
-
         // 记录检测过程
         private void Log(string message)
         {
@@ -42,8 +40,9 @@ namespace ADBDrive
         // 增强版驱动检测方法
         public bool IsDriverInstalled()
         {
-          return CheckViaPnpUtil() || CheckViaRegistry();
+            return CheckViaPnpUtil() || CheckViaRegistry();
         }
+
         // ADB工具是否安装
         public class ADBChecker
         {
@@ -130,7 +129,6 @@ namespace ADBDrive
             }
             else
             {
-                MessageBox.Show("ADB未正确安装\n" + report);
                 Log("ADB未正确安装\n" + report);
                 return false;
             }
@@ -162,7 +160,7 @@ namespace ADBDrive
         private bool CheckViaRegistry()
         {
             const string targetGuid = "{3f966bd9-fa04-4ec5-991c-d326973b5128}";
-            const string regPath = @"SYSTEM\CurrentControlSet\Control\Class\"+ targetGuid;
+            const string regPath = @"SYSTEM\CurrentControlSet\Control\Class\" + targetGuid;
             const string targetValueName = "Class";
             const string expectedValue = "AndroidUsbDeviceClass";
 
@@ -239,8 +237,11 @@ namespace ADBDrive
         {
             if (IsDriverInstalled())
             {
-                MessageBox.Show("驱动已安装，无需重复操作");
-                return;
+                DialogResult result = MessageBox.Show("驱动已安装，是否重新安装？", "提示", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                if (result == DialogResult.No)
+                {
+                    return;
+                }
             }
 
             if (!IsAdministrator())
@@ -248,7 +249,7 @@ namespace ADBDrive
                 MessageBox.Show("请以管理员权限运行");
                 return;
             }
-
+            button2.Enabled = false;
             string targetDir = Path.Combine(TempDir, "usb_driver");
             bool success = await DownloadAndExtractAsync(DriverUrl, "driver.zip", targetDir, DriverMd5);
 
@@ -258,16 +259,20 @@ namespace ADBDrive
                 int result = ExecuteCommand($"pnputil.exe /add-driver \"{infPath}\"");
                 MessageBox.Show(result == 0 ? "驱动安装成功" : "驱动安装失败");
             }
+            button2.Enabled = true;
         }
 
         // 安装平台工具
         private async void BtnInstallTools_Click(object sender, EventArgs e)
         {
-
-
             if (IsToolsInstalled())
             {
                 Log("工具已安装，无需重复操作");
+                return;
+            }
+            if (!IsAdministrator())
+            {
+                MessageBox.Show("请以管理员权限运行");
                 return;
             }
             string targetDir = Path.Combine(TempDir, "platform-tools");
@@ -315,11 +320,13 @@ namespace ADBDrive
                 StringBuilder output = new StringBuilder();
                 StringBuilder error = new StringBuilder();
 
-                process.OutputDataReceived += (sender, e) => {
+                process.OutputDataReceived += (sender, e) =>
+                {
                     if (!string.IsNullOrEmpty(e.Data)) output.AppendLine(e.Data);
                 };
 
-                process.ErrorDataReceived += (sender, e) => {
+                process.ErrorDataReceived += (sender, e) =>
+                {
                     if (!string.IsNullOrEmpty(e.Data)) error.AppendLine(e.Data);
                 };
 
@@ -398,18 +405,18 @@ namespace ADBDrive
             System.Environment.Exit(0);
         }
 
-        private void 启用日志ToolStripMenuItem_Click(object sender, EventArgs e)
+        private void ToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (启用日志ToolStripMenuItem.Text == "启用日志")
+            if (ToolStripMenuItem.Text == "启用日志")
             {
+                this.Height = 300;
                 textBox1.Visible = true;
-                启用日志ToolStripMenuItem.Text = "禁用日志";
+                ToolStripMenuItem.Text = "禁用日志";
+                return;
             }
-            else
-            {
-                textBox1.Visible = false;
-                启用日志ToolStripMenuItem.Text = "启用日志";
-            }
+            this.Height = 230;
+            textBox1.Visible = false;
+            ToolStripMenuItem.Text = "启用日志";
         }
     }
 }
